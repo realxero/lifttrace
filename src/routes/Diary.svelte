@@ -2,6 +2,9 @@
   import { makePainFlag } from '../lib/safety.js';  // fork: safety layer
   // Fork patch 3: suggestion engine.
   import SwapSheet from '../components/diary/SwapSheet.svelte';
+  // Fork patch 4: progress planning.
+  import WeekPlanCard from '../components/diary/WeekPlanCard.svelte';
+  import CheckinCard from '../components/diary/CheckinCard.svelte';
   import { cleanPrefs, muscleGaps } from '../lib/suggestions.js';
   import { getLibrary, getUsage } from '../lib/exercise-library.js';
   import { suggestionPrefs } from '../stores/settings.js';
@@ -2243,6 +2246,14 @@
         .filter(g => g.suggestion && !exercises.some(x => Number(x.exercise_id) === Number(g.suggestion.id)));
     } catch { gaps = []; }
   }
+  // Fork patch 4: start today's planned workout from the week card.
+  async function startPlanned(e) {
+    const { template, program } = e.detail || {};
+    if (!template) return;
+    selectedProgram = program || null;
+    await loadTemplate(template);
+  }
+
   function dismissGaps() {
     try { localStorage.setItem(_gapDismissKey($currentDate), '1'); } catch {}
     gaps = [];
@@ -2854,6 +2865,11 @@
 
   <!-- Exercise list -->
   <div class="exercise-list">
+    {#if !loading && isToday}
+      <!-- Fork patch 4 -->
+      <WeekPlanCard today={$currentDate} hasExercises={exercises.length > 0} refreshKey={exercises.length} on:start={startPlanned} />
+      <CheckinCard today={$currentDate} />
+    {/if}
     {#if !loading && isToday && gaps.length}
       <!-- Fork patch 3: muscle groups with no work in the last 7 days. -->
       <div class="gap-card" data-testid="gap-card">

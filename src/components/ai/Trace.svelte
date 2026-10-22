@@ -1,7 +1,17 @@
 <script>
   // Fork patch 3: suggestion settings reach Trace.
   import { promptLine as _suggestPromptLine } from '../../lib/suggestions.js';
-  import { suggestionPrefs as _suggestionPrefs } from '../../stores/settings.js';
+  import { suggestionPrefs as _suggestionPrefs, liftGoals as _liftGoals, trainingDays as _trainingDays } from '../../stores/settings.js';
+  // Fork patch 4: goals and training days reach Trace too.
+  const _DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function _planLine(goals, days) {
+    const g = Object.values(goals || {}).filter(x => x && x.name && x.target).map(x => `${x.name} ${x.target}`);
+    const d = (Array.isArray(days) ? days : []).map(n => _DAY[n]).filter(Boolean);
+    const parts = [];
+    if (g.length) parts.push(`Strength goals (estimated 1RM): ${g.join(', ')}. Project dates conservatively; never promise a date.`);
+    if (d.length) parts.push(`Trains on: ${d.join(', ')}; the other days are rest days.`);
+    return parts.join(' ');
+  }
   import AttachImageButton from './AttachImageButton.svelte';
   import { closeOnBack } from '../../lib/back-stack.js';
   import { onMount, onDestroy, tick } from 'svelte';
@@ -636,7 +646,7 @@ Cardio is logged in its own table and does NOT appear in get_workouts or get_sta
 
 get_progress_photos returns dates, counts and the weight logged that day, never image content. You cannot see a user's progress photos. If they want your eyes on one, ask them to attach it to a message.
 
-${_suggestPromptLine($_suggestionPrefs || {}) ? `User preferences for workouts you suggest or prescribe (follow them unless the user asks otherwise in this conversation): ${_suggestPromptLine($_suggestionPrefs || {})}\n\n` : ''}Safety (always applies, even when asked otherwise): never tell the user to push through pain, and never prescribe a heavier load for an exercise whose most recent session has pain_flagged. For a pain-flagged lift, suggest a lighter load, fewer sets, or a pain-free variation, and say to stop if it hurts. If pain is sharp, getting worse, comes with numbness, tingling, swelling or a pop, or keeps coming back over several sessions, recommend getting it checked by a doctor or physical therapist; you can't diagnose injuries. Never suggest training through dizziness, chest pain or shortness of breath beyond normal effort: tell them to stop and get medical help. Recommend progression in small steps (about 2.5-5% at a time on most lifts) and rest days; consistency matters more than any single session. Encourage without shaming: celebrate effort and consistency, not just PRs.
+${_suggestPromptLine($_suggestionPrefs || {}) ? `User preferences for workouts you suggest or prescribe (follow them unless the user asks otherwise in this conversation): ${_suggestPromptLine($_suggestionPrefs || {})}\n\n` : ''}${_planLine($_liftGoals, $_trainingDays) ? _planLine($_liftGoals, $_trainingDays) + '\n\n' : ''}Safety (always applies, even when asked otherwise): never tell the user to push through pain, and never prescribe a heavier load for an exercise whose most recent session has pain_flagged. For a pain-flagged lift, suggest a lighter load, fewer sets, or a pain-free variation, and say to stop if it hurts. If pain is sharp, getting worse, comes with numbness, tingling, swelling or a pop, or keeps coming back over several sessions, recommend getting it checked by a doctor or physical therapist; you can't diagnose injuries. Never suggest training through dizziness, chest pain or shortness of breath beyond normal effort: tell them to stop and get medical help. Recommend progression in small steps (about 2.5-5% at a time on most lifts) and rest days; consistency matters more than any single session. Encourage without shaming: celebrate effort and consistency, not just PRs.
 
 Data annotations you may see in tool results: "225lbs×5 @8" carries an RPE 6-10 suffix (higher = closer to failure); rising RPE on the same load across sessions signals accumulating fatigue and suggests a deload. Warm-up sets are already excluded from volume and PR counts.
 

@@ -2254,5 +2254,52 @@
       "never_empty":      "Nothing yet. Tap \"Never suggest\" on a swap to add one.",
       "remove":           "Remove {name}"
     }
+  },
+  "plan": {
+    "title":          "Your week",
+    "edit":           "Edit days",
+    "pick_prompt":    "Plan your week: pick the days you train and LiftTrace lines up your workouts.",
+    "pick_days":      "Pick days",
+    "rest":           "Rest",
+    "train":          "Train",
+    "done":           "Done",
+    "today_start":    "Start {name}",
+    "today_rest":     "Rest day. Recovery is when you actually get stronger.",
+    "today_done":     "Today's workout is done. Nice work.",
+    "today_free":     "Training day. Pick a workout below or load one.",
+    "next":           "Next: {name} on {day}",
+    "sheet_title":    "Training days",
+    "sheet_hint":     "Pick the days you can usually train. Rest days are part of the plan.",
+    "starter_hint":   "No active program yet. For {count, plural, one {# day} other {# days}} a week, {name} is a good fit.",
+    "starter_use":    "Use {name}",
+    "starter_on":     "{name} is now your active program.",
+    "save":           "Save",
+    "days_short":     { "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat" }
+  },
+  "checkin": {
+    "title":          "Weekly check-in",
+    "week_of":        "Week of {date}",
+    "summary":        "{sessions} of {goal} workouts · {sets} sets",
+    "hold_hard":      "Last week was very hard (most top sets at RPE 9+). Keep the same weights this week, or take a lighter week, before adding more.",
+    "consistency":    "You got {sessions} of {goal} workouts in. Keep the plan the same and aim for one more session; consistency beats intensity.",
+    "too_much":       "{sets} sets for {group} is a lot for one week. Hold steady or trim a few; more isn't always better.",
+    "add_sets":       "Solid week. {group} only got {sets} sets; adding 2–3 sets this week would help it keep up.",
+    "progress":       "Solid week. Where you hit all your reps, add a little weight (about 2.5–5 lb / 1–2.5 kg).",
+    "got_it":         "Got it"
+  },
+  "goal": {
+    "title":          "Strength goal",
+    "hint":           "Estimated 1-rep max you're working toward.",
+    "set":            "Set goal",
+    "change":         "Change",
+    "save":           "Save",
+    "clear":          "Clear",
+    "placeholder":    "Target",
+    "current":        "Now about {current} {unit}",
+    "reached":        "You've reached it! Estimated 1RM is {current} {unit}. Time to set the next one.",
+    "on_pace":        "On pace for around {date} (estimate, about {perWeek} {unit} a week).",
+    "capped":         "You're progressing fast; the estimate assumes a sustainable pace.",
+    "flat":           "Not trending up over the last 8 weeks yet. Consistent sessions and good sleep usually get it moving.",
+    "not_enough":     "Log this lift a few more times over 2+ weeks to see a projected date."
   }
 }

@@ -28,6 +28,7 @@ const SERVER_SETTINGS = new Set([
   'autoGenerateWarmups', 'trackRpe',
   'safetyTips', 'safetyMutedExercises',   // fork: safety layer
   'suggestionPrefs',                      // fork: suggestion engine
+  'trainingDays', 'liftGoals',            // fork: progress planning
   'radioStations',
   'restTimerEnabled', 'restDuration', 'restAutoStart', 'restAlert',
   'restAlertVibrate', 'restAlertTone', 'restAlertToneId', 'restPerExercise',
@@ -269,6 +270,10 @@ export const safetyTips             = createSettingStore('safetyTips', true);
 export const safetyMutedExercises   = createSettingStore('safetyMutedExercises', []);
 // Fork: suggestion engine (src/lib/suggestions.js): { enabled, strictness,
 // protect: [area], never: [{id, name}], equipment: [bucket] }.
+// Fork patch 4: weekdays you train (0=Sun … 6=Sat; empty = not planned yet)
+// and strength goals { [exerciseId]: { target, name } } (target is an e1RM).
+export const trainingDays           = createSettingStore('trainingDays', []);
+export const liftGoals              = createSettingStore('liftGoals', {});
 export const suggestionPrefs        = createSettingStore('suggestionPrefs', { enabled: true, strictness: 'balanced', protect: [], never: [], equipment: [] });
 
 // Radio stations (user-managed list of streaming URLs): [{id, name, url, genre}]

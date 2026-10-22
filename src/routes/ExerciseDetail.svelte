@@ -13,6 +13,10 @@
   import Spinner from '../components/ui/Spinner.svelte';
   import { findSimilarExercises } from '../lib/exerciseSimilarity.js';
   import { exportExercise } from '../lib/exerciseShare.js';
+  // Fork patch 4: strength goal + projected date.
+  import { liftGoals } from '../stores/settings.js';
+  import { projectGoal, e1rmSeries } from '../lib/planner.js';
+  import { localDateStr } from '../lib/db.js';
 
   let exporting = false;
   async function handleExport() {
@@ -78,6 +82,31 @@
   }
 
   onMount(load);
+
+  // ── Fork patch 4: strength goal ───────────────────────────────────
+  let goalEditing = false;
+  let goalDraft = '';
+  $: goal = exercise ? ($liftGoals || {})[exercise.id] || null : null;
+  $: series = e1rmSeries(history);
+  $: currentE1rm = series.length ? Math.round(Math.max(...series.slice(-3).map(p => p.e1rm))) : 0;
+  $: projection = goal ? projectGoal(history, goal.target, { today: localDateStr() }) : null;
+  function editGoal() { goalDraft = goal ? String(goal.target) : (currentE1rm ? String(Math.ceil(currentE1rm * 1.1 / 5) * 5) : ''); goalEditing = true; }
+  function saveGoal() {
+    const t = Number(goalDraft);
+    if (!(t > 0) || !exercise) return;
+    liftGoals.set({ ...($liftGoals || {}), [exercise.id]: { target: t, name: exercise.name } });
+    goalEditing = false;
+  }
+  function clearGoal() {
+    if (!exercise) return;
+    const { [exercise.id]: _drop, ...rest } = $liftGoals || {};
+    liftGoals.set(rest);
+    goalEditing = false;
+  }
+  function fmtGoalDate(d) {
+    const t = Date.parse(`${d}T12:00:00`);
+    return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : d;
+  }
 
   // Timed exercise (issue #89): judged by what the most recent session was,
   // so an exercise switched to Time shows its hold record and hold chart.
@@ -220,6 +249,38 @@
         </div>
       {/if}
 
+      {#if !detailTimed}
+        <!-- Fork patch 4: strength goal -->
+        <div class="goal-card" data-testid="goal-card">
+          <div class="goal-head">
+            <h3 class="goal-title">{$_('goal.title')}{#if goal}: {goal.target} {$weightUnit}{/if}</h3>
+            {#if goal && !goalEditing}<button type="button" class="goal-link" on:click={editGoal}>{$_('goal.change')}</button>{/if}
+          </div>
+          {#if goalEditing || !goal}
+            <p class="goal-hint">{$_('goal.hint')}{#if currentE1rm} {$_('goal.current', { values: { current: currentE1rm, unit: $weightUnit } })}.{/if}</p>
+            {#if goalEditing}
+              <div class="goal-form">
+                <input class="goal-input" type="number" inputmode="decimal" min="1" placeholder={$_('goal.placeholder')}
+                  aria-label={$_('goal.placeholder')} bind:value={goalDraft} on:keydown={(e) => e.key === 'Enter' && saveGoal()} />
+                <span class="goal-unit">{$weightUnit}</span>
+                <button type="button" class="btn btn-primary goal-save" on:click={saveGoal}>{$_('goal.save')}</button>
+                {#if goal}<button type="button" class="goal-link muted" on:click={clearGoal}>{$_('goal.clear')}</button>{/if}
+              </div>
+            {:else}
+              <button type="button" class="goal-link" on:click={editGoal}>{$_('goal.set')}</button>
+            {/if}
+          {:else if projection}
+            <p class="goal-text" data-status={projection.status}>
+              {#if projection.status === 'reached'}{$_('goal.reached', { values: { current: projection.current, unit: $weightUnit } })}
+              {:else if projection.status === 'on_pace'}{$_('goal.current', { values: { current: projection.current, unit: $weightUnit } })}. {$_('goal.on_pace', { values: { date: fmtGoalDate(projection.date), perWeek: projection.perWeek, unit: $weightUnit } })}
+                {#if projection.capped}<span class="goal-sub">{$_('goal.capped')}</span>{/if}
+              {:else if projection.status === 'flat'}{$_('goal.current', { values: { current: projection.current, unit: $weightUnit } })}. {$_('goal.flat')}
+              {:else}{$_('goal.not_enough')}{/if}
+            </p>
+          {/if}
+        </div>
+      {/if}
+
       {#if similar.length > 0}
         <div class="similar-section">
           <h3 class="similar-title">{$_('exercise_detail.similar_exercises')}</h3>
@@ -345,4 +406,16 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .similar-equip { font-size: 11px; color: var(--text-3); }
+  /* Fork patch 4: strength goal */
+  .goal-card { margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-lg, 14px); background: var(--surface-1); border: 1px solid var(--border); }
+  .goal-head { display: flex; align-items: center; gap: 8px; }
+  .goal-title { flex: 1; margin: 0; font-size: 15px; color: var(--text-1); }
+  .goal-hint, .goal-text { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+  .goal-sub { display: block; margin-top: 4px; color: var(--text-3); font-size: 12px; }
+  .goal-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .goal-input { width: 110px; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2, transparent); color: var(--text-1); font: inherit; font-size: 16px; }
+  .goal-unit { color: var(--text-3); font-size: 13px; }
+  .goal-save { min-height: 40px; padding: 0 16px; }
+  .goal-link { background: none; border: 0; padding: 4px 0; min-height: 32px; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .goal-link.muted { color: var(--text-3); font-weight: 500; }
 </style>
