@@ -23,7 +23,7 @@
   import { _ } from 'svelte-i18n';
   import { fade } from 'svelte/transition';
   import { push } from 'svelte-spa-router';
-  import { isNative } from '../lib/platform.js';
+  import { isAndroid as isNative } from '../lib/platform.js';  // fork: APK banner is Android-only
   import { portal } from '../lib/portal.js';
   import {
     checkForUpdate, getAutoCheck,

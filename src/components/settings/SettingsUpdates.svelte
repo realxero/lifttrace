@@ -19,8 +19,8 @@
   import { onMount } from 'svelte';
   import { _ } from 'svelte-i18n';
   import Toggle from './Toggle.svelte';
-  import { APP_VERSION } from '../../lib/version.js';
-  import { isNative } from '../../lib/platform.js';
+  import { APP_VERSION, APP_BUILD } from '../../lib/version.js';
+  import { isNative, isAndroid } from '../../lib/platform.js';
   import { currentUser } from '../../stores/auth.js';
   import { showSuccess, showError } from '../../stores/toast.js';
   import {
@@ -65,7 +65,7 @@
 
   $: isAdmin        = $currentUser?.role === 'admin';
   $: available      = latest && isUpdateAvailable(latest);
-  $: showApkPanel   = isNative;
+  $: showApkPanel   = isAndroid;   // fork: the iOS app updates by re-sideloading the GitHub build
   $: showServerPanel= !isNative && isAdmin;
 
   function _normalizeChannel(v) {
@@ -241,7 +241,7 @@
         <span class="material-symbols-rounded row-icon" aria-hidden="true">info</span>
         <div class="label-main">{$_('updates.current_version')}</div>
       </div>
-      <div class="row-value version-chip">{APP_VERSION}</div>
+      <div class="row-value version-chip" title="Build {APP_BUILD}">{APP_VERSION} · {APP_BUILD}</div>
     </div>
 
     <div class="divider"></div>

@@ -10,8 +10,10 @@
  * Android only, and only when a watch is actually paired with this phone.
  */
 import { registerPlugin } from '@capacitor/core';
-import { isNative, getServerUrl, getAuthToken } from './platform.js';
-import { APP_VERSION } from './version.js';
+import { isAndroid as isNative, getServerUrl, getAuthToken } from './platform.js';  // fork: Wear OS is Android-only
+// Fork: the watch updates itself to the phone's *upstream* release, so it
+// gets the version without "+fork.N" (there is no GitHub release by that name).
+import { UPSTREAM_VERSION as APP_VERSION } from './version.js';
 
 // Registered at module level: a plugin proxy returned from an async function
 // confuses Capacitor's promise handling.

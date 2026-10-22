@@ -1,0 +1,63 @@
+# Fork: unit tests + end-to-end smoke tests on every push.
+# The e2e job builds the app, boots the real server on a throwaway database
+# and drives it on an iPhone-sized screen in WebKit (Safari's engine) and
+# Chromium. Failure screenshots + traces are uploaded.
+#
+# Node 20 to match the Dockerfile: the server's better-sqlite3 has no
+# prebuilt binary for Node 22.
+name: Fork tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm ci
+        working-directory: server
+      - run: npm run i18n:check
+      - run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [webkit, chromium]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - name: Build the app
+        run: |
+          npm ci
+          npm run build
+      - name: Server dependencies
+        run: cd server && npm ci
+      - name: Test dependencies + browser
+        run: |
+          cd e2e
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run e2e tests
+        env:
+          E2E_BROWSER: ${{ matrix.browser }}
+        run: cd e2e && mkdir -p .auth && npx playwright test
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 14

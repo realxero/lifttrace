@@ -1,7 +1,10 @@
 import { writable, get } from 'svelte/store';
 import { DB } from '../lib/db.js';
 import { createMseStreamer, isSupported as mseSupported, mimeForContainer, isTypeSupported as mseTypeSupported } from '../lib/mseStreamer.js';
-import { isNative, getAuthToken, apiUrl, resolveAssetUrl } from '../lib/platform.js';
+import { isAndroid, getAuthToken, apiUrl, resolveAssetUrl } from '../lib/platform.js';
+// Fork: "native" playback here means the Android ExoPlayer plugin. The iOS
+// app plays through the web audio path, same as Safari.
+const isNative = isAndroid;
 
 /**
  * Music player store — aligned with Google's canonical Media Session sample:

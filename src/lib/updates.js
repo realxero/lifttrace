@@ -30,7 +30,7 @@
  */
 import { writable } from 'svelte/store';
 import { APP_VERSION } from './version.js';
-import { isNative } from './platform.js';
+import { isNative, isAndroid } from './platform.js';
 import { pickApkAsset } from './apk-asset.js';
 import { DB } from './db.js';
 
@@ -363,7 +363,7 @@ function _apkVersionFromName(name) {
  * throwing, since this is purely diagnostic UX.
  */
 export async function getUpdateCacheInfo() {
-  if (!isNative) return null;
+  if (!isAndroid) return null;
   try {
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     let listing;
@@ -392,7 +392,7 @@ export async function getUpdateCacheInfo() {
  * space without waiting for the next boot cleanup pass. Native-only.
  */
 export async function clearUpdateCache() {
-  if (!isNative) return;
+  if (!isAndroid) return;
   try {
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     const listing = await Filesystem.readdir({ path: 'updates', directory: Directory.Data }).catch(() => null);
@@ -431,7 +431,7 @@ export function formatBytes(n) {
  * best-effort housekeeping, not a critical path.
  */
 export async function cleanUpdateCache({ alsoOlderThanDays = 7 } = {}) {
-  if (!isNative) return;
+  if (!isAndroid) return;
   try {
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     let listing;
@@ -463,7 +463,7 @@ export async function cleanUpdateCache({ alsoOlderThanDays = 7 } = {}) {
  * Download & Install. Native-only; false anywhere else or on any doubt.
  */
 export async function isApkStaged(latest) {
-  if (!isNative || !latest?.apkAsset?.name || !(latest.apkAsset.size > 0)) return false;
+  if (!isAndroid || !latest?.apkAsset?.name || !(latest.apkAsset.size > 0)) return false;
   try {
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     const st = await Filesystem.stat({ path: `updates/${latest.apkAsset.name}`, directory: Directory.Data });
@@ -490,7 +490,7 @@ export async function isApkStaged(latest) {
  *      Native download streams straight to disk.
  */
 export async function downloadAndInstallApk(latest, onProgress) {
-  if (!isNative) throw new Error('APK install only available in the Android app');
+  if (!isAndroid) throw new Error('APK install only available in the Android app');
   if (!latest?.apkAsset) throw new Error('No APK asset in this release');
   const { Filesystem, Directory } = await import('@capacitor/filesystem');
 

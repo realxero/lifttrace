@@ -14,6 +14,15 @@ import { Capacitor } from '@capacitor/core';
 export const isNative = Capacitor.isNativePlatform();
 
 /**
+ * Fork: which native shell. Several native plugins in this app (ExoPlayer
+ * radio, the stream proxy, Wear OS pairing, the fold sensor) only exist in
+ * the Android build. On iOS the app must take the web path for those, or a
+ * call into a plugin that isn't there throws "not implemented".
+ */
+export const isAndroid = isNative && Capacitor.getPlatform() === 'android';
+export const isIOS = isNative && Capacitor.getPlatform() === 'ios';
+
+/**
  * Server-injected base path (when LiftTrace is mounted at a subpath via
  * BASE_URL env var, e.g. `/lifttrace`). Empty string when running at root,
  * or in native where API calls go through getServerUrl() which already

@@ -19,7 +19,7 @@
  * State strings: 'idle' | 'buffering' | 'playing' | 'paused' | 'ended' | 'error'.
  */
 
-import { isNative } from './platform.js';
+import { isAndroid as isNative } from './platform.js';  // fork: ExoPlayer is Android-only
 import { registerPlugin } from '@capacitor/core';
 
 let _plugin = null;

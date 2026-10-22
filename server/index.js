@@ -126,13 +126,17 @@ router.use((req, res, next) => { res.set('X-Server-Time', new Date().toISOString
 //   http://localhost               — legacy http scheme
 //   https://app.lifttrace.local    — current app identity (see
 //                                    capacitor.config.ts for why)
+//   capacitor://app.lifttrace.local — fork: the iOS app (WKWebView can't
+//   capacitor://localhost              serve its pages over https://)
 router.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin) {
     const host = req.get('host');
     const isCapacitor = origin === 'https://localhost'
       || origin === 'http://localhost'
-      || origin === 'https://app.lifttrace.local';
+      || origin === 'https://app.lifttrace.local'
+      || origin === 'capacitor://app.lifttrace.local'
+      || origin === 'capacitor://localhost';
     const isSameHost = host && origin.includes(host);
     if (isCapacitor || isSameHost) {
       res.setHeader('Access-Control-Allow-Origin', origin);

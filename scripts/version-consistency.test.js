@@ -14,7 +14,9 @@ const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
 const json = (p) => JSON.parse(read(p));
 
 // `v1.4.0-dev01` in version.js, bare everywhere else.
-const appVersion = read('../src/lib/version.js').match(/APP_VERSION\s*=\s*'v?([^']+)'/)?.[1];
+// Fork: version.js carries the upstream version as UPSTREAM_VERSION and
+// appends "+fork.N"; the files below carry the upstream version.
+const appVersion = read('../src/lib/version.js').match(/UPSTREAM_VERSION\s*=\s*'v?([^']+)'/)?.[1];
 
 test('version.js carries a version', () => {
   assert.match(appVersion || '', /^\d+\.\d+\.\d+(-dev\d+)?$/);

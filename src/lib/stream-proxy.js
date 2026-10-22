@@ -13,7 +13,7 @@
  * /api/radio-proxy already provides the same same-origin remapping.
  */
 
-import { isNative } from './platform.js';
+import { isAndroid as isNative } from './platform.js';  // fork: the local proxy plugin is Android-only
 import { registerPlugin } from '@capacitor/core';
 
 let _plugin = null;

@@ -11,7 +11,7 @@
  * The <html> element gets fold-book or fold-tabletop and --fold-start/--fold-end.
  */
 import { writable } from 'svelte/store';
-import { isNative } from './platform.js';
+import { isAndroid as isNative } from './platform.js';  // fork: the Fold plugin is Android-only
 
 export const fold = writable(null);
 

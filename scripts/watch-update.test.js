@@ -13,7 +13,7 @@ const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
 
 test('the phone tells the watch which release it runs when it pairs', () => {
   const js = read('../src/lib/wear-pairing.js');
-  assert.match(js, /import \{ APP_VERSION \} from '\.\/version\.js';/);
+  assert.match(js, /import \{ UPSTREAM_VERSION as APP_VERSION \} from '\.\/version\.js';/);
   assert.match(js, /WearPairing\.pair\(\{ serverUrl, token, appVersion: APP_VERSION \}\)/);
   const plugin = read('../android/app/src/main/java/com/lifttrace/app/WearPairingPlugin.java');
   assert.match(plugin, /putString\("appVersion", call\.getString\("appVersion", ""\)\)/);
