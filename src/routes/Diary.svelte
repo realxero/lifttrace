@@ -1,4 +1,5 @@
 <script>
+  import { makePainFlag } from '../lib/safety.js';  // fork: safety layer
   import { closeOnBack } from '../lib/back-stack.js';
   import { onMount, onDestroy } from 'svelte';
   import { withFreshIds } from '../lib/workout-uuid.js';
@@ -2210,6 +2211,10 @@
     const actions = [];
     actions.push({ label: $_('set_video.film_set'), icon: 'videocam', value: 'film' });
     actions.push({ label: 'Replace exercise', icon: 'swap_horiz', value: 'replace' });
+    // Fork: safety layer. The flag lives on this session's exercise entry.
+    actions.push(ex.pain
+      ? { label: $_('safety.clear_pain'), icon: 'healing', value: 'clear_pain' }
+      : { label: $_('safety.flag_pain'), icon: 'healing', value: 'flag_pain' });
     if (inSs) {
       actions.push({ label: 'Remove from superset', icon: 'link_off', value: 'leave_ss' });
     } else {
@@ -2234,6 +2239,23 @@
         showPicker = true;
         break;
       case 'film': openVideoSheet(idx); break;
+      case 'flag_pain': {
+        const ex = exercises[idx];
+        if (ex) {
+          updateExercise(idx, { ...ex, pain: makePainFlag() });
+          showSuccess($_('safety.flagged_toast'));
+        }
+        break;
+      }
+      case 'clear_pain': {
+        const ex = exercises[idx];
+        if (ex) {
+          const { pain: _drop, ...rest } = ex;
+          updateExercise(idx, { ...rest, pain: null });
+          showSuccess($_('safety.cleared_toast'));
+        }
+        break;
+      }
       case 'leave_ss': leaveSuperset(idx); break;
       case 'join_ss': joinPickerOpen = true; break;
       case 'new_ss':

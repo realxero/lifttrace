@@ -175,6 +175,8 @@ function _shapeWorkout(w) {
       name: ex.exercise_name,
       ...(ex.exercise_id ? { exercise_id: ex.exercise_id } : {}),
       ...(timedEx ? { set_type: 'time' } : {}),
+      // Fork (safety layer): the lifter flagged pain or discomfort on this exercise.
+      ...(ex.pain ? { pain_flagged: true, ...(ex.pain.note ? { pain_note: String(ex.pain.note) } : {}) } : {}),
       sets,
       total_volume: Math.round(_exerciseVolume(ex)),
       ...(topSet ? { top_set: timedEx

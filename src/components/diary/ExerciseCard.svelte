@@ -8,6 +8,9 @@
   import { exerciseLoadTypes, exerciseSetTypes } from '../../stores/settings.js';
   import { holdTimer, holdResult, startHold, stopHold, consumeHoldResult, holdMatches } from '../../stores/holdTimer.js';
   import LoadTypeMenu from '../ui/LoadTypeMenu.svelte';
+  // Fork: safety layer (deload / pain follow-ups / big jumps).
+  import { safetyNotes } from '../../lib/safety.js';
+  import { safetyTips, safetyMutedExercises } from '../../stores/settings.js';
 
   export let exercise;
   export let idx;
@@ -46,6 +49,8 @@
   // days and sessions when the same exercise sits in the same place.
   let lastSession = null;
   let _lastSessionFetched = null;
+  // Fork: the whole history, for the safety tips.
+  let history = [];
   $: if (exercise.exercise_id && `${exercise.exercise_id}|${date}` !== _lastSessionFetched) {
     _lastSessionFetched = `${exercise.exercise_id}|${date}`;
     loadLastSession(exercise.exercise_id, date);
@@ -53,14 +58,50 @@
   async function loadLastSession(exerciseId, day) {
     const key = `${exerciseId}|${day}`;
     lastSession = null;
+    history = [];
     try {
       // Same pick as auto-fill (lastCompletedSession, issue #103), so the row
       // and the pre-filled sets always come from the same session. Days
       // before this one only: today's own sets are not "last time".
-      const recent = lastCompletedSession(await LtApi.getWorkoutHistory(exerciseId), { before: day });
-      if (!recent || key !== _lastSessionFetched) return;
+      const all = await LtApi.getWorkoutHistory(exerciseId);
+      if (key !== _lastSessionFetched) return;
+      history = Array.isArray(all) ? all : [];
+      const recent = lastCompletedSession(history, { before: day });
+      if (!recent) return;
       lastSession = { date: recent.date, sets: recent.completed, set_type: recent.set_type };
     } catch {}
+  }
+
+  // ── Fork: safety tips ─────────────────────────────────────────────
+  // "Got it" hides the coaching tips (deload, jump) on this card for this
+  // day only; "Hide tips for this exercise" mutes them for good (Settings →
+  // Workout → Safety Tips brings them back). Pain notes always show.
+  const _dismissKey = (d, id) => `lt:safetyDismissed:${d}:${id}`;
+  let _dismissed = false;
+  $: _dismissed = (() => {
+    try { return !!(exercise.exercise_id && localStorage.getItem(_dismissKey(date, exercise.exercise_id))); }
+    catch { return false; }
+  })();
+  $: _muted = !!exercise.exercise_id && ($safetyMutedExercises || []).includes(exercise.exercise_id);
+  $: notes = $safetyTips
+    ? safetyNotes({
+        history, currentSets: sets, before: date, unit, setType,
+        painToday: !!exercise.pain, muted: _muted || _dismissed,
+      })
+    : (exercise.pain ? [{ kind: 'pain_today' }] : []);
+  $: hasCoachingTip = notes.some(n => n.kind === 'deload' || n.kind === 'jump');
+  function dismissTips() {
+    try { localStorage.setItem(_dismissKey(date, exercise.exercise_id), '1'); } catch {}
+    _dismissed = true;
+  }
+  function muteTips() {
+    if (!exercise.exercise_id) return;
+    const cur = $safetyMutedExercises || [];
+    if (!cur.includes(exercise.exercise_id)) safetyMutedExercises.set([...cur, exercise.exercise_id]);
+  }
+  function _fmtShortDate(d) {
+    const t = Date.parse(`${d}T12:00:00`);
+    return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : d;
   }
 
   // Optional library-level default (issue #24). Diary enriches each
@@ -352,6 +393,11 @@
       </div>
       <div class="ex-meta-row">
         <span class="ex-meta">{completedCount}/{workingSets.length} sets</span>
+        {#if exercise.pain}
+          <span class="pain-chip" title={$_('safety.pain_today_title')}>
+            <span class="material-symbols-rounded" aria-hidden="true">healing</span>{$_('safety.pain_today_title')}
+          </span>
+        {/if}
         {#if exerciseMedia.length}
           <button type="button" class="ex-clip" on:click|stopPropagation={() => dispatch('openMedia', exerciseMedia[0])}
             title="Watch this set" aria-label="Watch this set">
@@ -403,6 +449,35 @@
                 title="Volume vs last session">
             {volumeDeltaPct > 0 ? '+' : ''}{volumeDeltaPct}%
           </span>
+        {/if}
+      </div>
+    {/if}
+    {#if notes.length}
+      <div class="safety-notes" data-testid="safety-notes">
+        {#each notes as n}
+          <div class="safety-note" class:pain={n.kind.startsWith('pain')} data-kind={n.kind}>
+            <span class="material-symbols-rounded safety-icon" aria-hidden="true">
+              {n.kind === 'deload' ? 'battery_charging_50' : n.kind === 'jump' ? 'trending_up' : n.kind === 'pain_repeat' ? 'medical_services' : 'healing'}
+            </span>
+            <div class="safety-text">
+              {#if n.kind === 'pain_today'}{$_('safety.pain_today')}
+              {:else if n.kind === 'pain_last'}{$_('safety.pain_last', { values: { date: _fmtShortDate(n.date) } })}
+                {#if n.note}<span class="safety-sub">{$_('safety.pain_note', { values: { note: n.note } })}</span>{/if}
+              {:else if n.kind === 'pain_repeat'}{$_('safety.pain_repeat', { values: { count: n.count } })}
+              {:else if n.kind === 'deload'}{$_('safety.deload', { values: { rpes: n.rpes.join(', ') } })}
+              {:else if n.kind === 'jump'}{$_('safety.jump', { values: { from: n.from, to: n.to, unit } })}
+              {/if}
+              {#if n.kind === 'pain_last' || n.kind === 'pain_today' || n.kind === 'pain_repeat'}
+                <button type="button" class="safety-link" on:click|stopPropagation={() => dispatch('info')}>{$_('safety.find_variation')}</button>
+              {/if}
+            </div>
+          </div>
+        {/each}
+        {#if hasCoachingTip}
+          <div class="safety-actions">
+            <button type="button" class="safety-link" on:click|stopPropagation={dismissTips}>{$_('safety.got_it')}</button>
+            <button type="button" class="safety-link muted" on:click|stopPropagation={muteTips}>{$_('safety.mute')}</button>
+          </div>
         {/if}
       </div>
     {/if}
@@ -563,6 +638,33 @@
   .expand-icon.rotated { transform: rotate(-90deg); }
 
   /* Last-time ghost row */
+  /* Fork: safety tips */
+  .safety-notes { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 4px; }
+  .safety-note {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+    color: var(--text-1); font-size: 12.5px; line-height: 1.4;
+  }
+  .safety-note.pain { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+  .safety-icon { font-size: 18px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+  .safety-note.pain .safety-icon { color: var(--danger); }
+  .safety-text { min-width: 0; overflow-wrap: anywhere; }
+  .safety-sub { display: block; color: var(--text-2); margin-top: 2px; }
+  .safety-actions { display: flex; gap: 14px; flex-wrap: wrap; padding: 0 2px; }
+  .safety-link {
+    background: none; border: 0; padding: 4px 0; margin-right: 10px; min-height: 28px;
+    color: var(--accent); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .safety-link.muted { color: var(--text-3); font-weight: 500; }
+  .pain-chip {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 10.5px; font-weight: 600; color: var(--danger);
+    padding: 1px 6px; border-radius: 999px;
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+  }
+  .pain-chip .material-symbols-rounded { font-size: 13px; }
+
   .last-row {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     padding: 6px 14px 8px;

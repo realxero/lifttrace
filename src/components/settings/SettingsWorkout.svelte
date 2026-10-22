@@ -8,6 +8,7 @@
     exerciseReorderMethod, confirmExerciseRemoval, restTimerEnabled,
     restDuration, restAutoStart, restAlert, restAlertVibrate, restAlertTone,
     bodyStatsVisible, autoGenerateWarmups, trackRpe, restAlertToneId,
+    safetyTips, safetyMutedExercises,
     caloriesBurnedEnabled,
   } from '../../stores/settings.js';
   import { REST_TONES } from '../../lib/restTones.js';
@@ -201,6 +202,20 @@
           </div>
           <Toggle bind:checked={$trackRpe} />
         </div>
+        <!-- Fork: safety layer -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <span class="setting-label">{$_('settings_workout.logging.safety')}</span>
+            <span class="setting-hint">{$_('settings_workout.logging.safety_desc')}</span>
+            {#if $safetyTips && ($safetyMutedExercises || []).length}
+              <span class="setting-hint">
+                {$_('settings_workout.logging.safety_muted', { values: { count: $safetyMutedExercises.length } })}
+                · <button type="button" class="link-btn" on:click={() => safetyMutedExercises.set([])}>{$_('settings_workout.logging.safety_unmute')}</button>
+              </span>
+            {/if}
+          </div>
+          <Toggle bind:checked={$safetyTips} />
+        </div>
       </div>
 
       <p class="sub-label">{$_('settings_workout.sections.rest_timer')}</p>
@@ -371,4 +386,6 @@
   }
   .tone-preview:hover { background: var(--surface-3); color: var(--accent); }
   .tone-preview .material-symbols-rounded { font-size: 18px; }
+  /* Fork: safety layer */
+  .link-btn { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 </style>

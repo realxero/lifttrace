@@ -26,6 +26,7 @@ const SERVER_SETTINGS = new Set([
   'screenKeepAwake', 'goalCelebrations', 'autoFillLastWeights', 'showCompletionSummary', 'favoriteExercises', 'customEquipment',
   'exerciseReorderMethod', 'autoCollapseCompleted', 'autoNameWorkouts', 'confirmExerciseRemoval',
   'autoGenerateWarmups', 'trackRpe',
+  'safetyTips', 'safetyMutedExercises',   // fork: safety layer
   'radioStations',
   'restTimerEnabled', 'restDuration', 'restAutoStart', 'restAlert',
   'restAlertVibrate', 'restAlertTone', 'restAlertToneId', 'restPerExercise',
@@ -261,6 +262,10 @@ export const autoNameWorkouts = createSettingStore('autoNameWorkouts', true);
 export const confirmExerciseRemoval = createSettingStore('confirmExerciseRemoval', true);
 export const autoGenerateWarmups    = createSettingStore('autoGenerateWarmups', false);
 export const trackRpe               = createSettingStore('trackRpe', false);
+// Fork: safety layer. Tips on each exercise card (deload, pain follow-ups,
+// big weight jumps), and exercise ids whose coaching tips are muted.
+export const safetyTips             = createSettingStore('safetyTips', true);
+export const safetyMutedExercises   = createSettingStore('safetyMutedExercises', []);
 
 // Radio stations (user-managed list of streaming URLs): [{id, name, url, genre}]
 export const radioStations = createSettingStore('radioStations', []);

@@ -65,11 +65,14 @@ test('an entry with no date never passes as before the day; no day keeps the old
 
 test('the card, auto-fill, PR badges, celebrations and the watch use the same day rule', () => {
   const card = read('../src/components/diary/ExerciseCard.svelte');
-  assert.match(card, /lastCompletedSession\(await LtApi\.getWorkoutHistory\(exerciseId\), \{ before: day \}\)/);
+  // Fork (safety layer): the card keeps the whole history for its tips, then
+  // picks last time from it with the same day rule.
+  assert.match(card, /const all = await LtApi\.getWorkoutHistory\(exerciseId\);/);
+  assert.match(card, /lastCompletedSession\(history, \{ before: day \}\)/);
   // Looked up again for a new day, and a late answer for an old one is dropped.
   assert.match(card, /\$: if \(exercise\.exercise_id && `\$\{exercise\.exercise_id\}\|\$\{date\}` !== _lastSessionFetched\)/);
   assert.match(card, /loadLastSession\(exercise\.exercise_id, date\);/);
-  assert.match(card, /if \(!recent \|\| key !== _lastSessionFetched\) return;/);
+  assert.match(card, /if \(key !== _lastSessionFetched\) return;/);
   const diary = read('../src/routes/Diary.svelte');
   const fill = diary.slice(diary.indexOf('async function getLastSets'), diary.indexOf('let pickerTargetSupersetId'));
   assert.match(fill, /\{ before: \$currentDate \}/);

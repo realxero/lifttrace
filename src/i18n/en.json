@@ -1969,7 +1969,11 @@
       "warmups":               "Auto-Generate Warm-Up Sets",
       "warmups_desc":          "When a template loads with target weights, prepend bar / 50% / 70% / 85% warm-ups. You can always add or remove them per-exercise.",
       "rpe":                   "Track RPE per Set",
-      "rpe_desc":              "Log Rate of Perceived Exertion (6–10 scale) on each completed set. Useful for autoregulated programs."
+      "rpe_desc":              "Log Rate of Perceived Exertion (6–10 scale) on each completed set. Useful for autoregulated programs.",
+      "safety":                "Safety Tips",
+      "safety_desc":           "Short tips on each exercise: a lighter session after very hard ones (needs RPE), follow-ups when you flag pain, and a heads-up on big weight jumps.",
+      "safety_muted":          "Tips muted for {count, plural, one {# exercise} other {# exercises}}",
+      "safety_unmute":         "Show for All"
     },
     "rest": {
       "enabled":           "Rest Timer",
@@ -2188,5 +2192,21 @@
       "view_notes":       "View Release Notes",
       "channel_note":     "To switch server channels, change your docker-compose.yml image tag (:latest, :dev) and re-run docker-compose pull && docker-compose up -d."
     }
+  },
+  "safety": {
+    "pain_today_title": "Pain flagged",
+    "pain_today":       "Stop if it gets worse, and keep the rest of this lift light. No session is worth an injury.",
+    "pain_last":        "You flagged pain here last time ({date}). Start lighter and stop if it hurts, or try a variation that feels okay.",
+    "pain_note":        "Your note: {note}",
+    "pain_repeat":      "Pain has come up on {count} sessions in the last month. It's worth getting it checked by a doctor or physical therapist before pushing harder.",
+    "deload":           "This has felt very hard (RPE {rpes}) three sessions in a row. A lighter session, about 10% less weight or one fewer set, usually helps you come back stronger.",
+    "jump":             "Big jump from last time ({from} → {to} {unit}). Make sure your warm-up sets feel solid first.",
+    "find_variation":   "Find a variation",
+    "got_it":           "Got it",
+    "mute":             "Hide tips for this exercise",
+    "flag_pain":        "Flag pain or discomfort",
+    "clear_pain":       "Clear pain flag",
+    "flagged_toast":    "Pain flagged. Take it easy on this one.",
+    "cleared_toast":    "Pain flag cleared."
   }
 }

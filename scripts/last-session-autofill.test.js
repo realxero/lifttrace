@@ -71,7 +71,10 @@ test('auto-fill and the Last Time row both use it; template precedence is untouc
   assert.match(quick, /sets = \[\.\.\.warmups, \.\.\.sets\];/);
   assert.doesNotMatch(fn, /history\[0\]/);
   const card = read('../src/components/diary/ExerciseCard.svelte');
-  assert.match(card, /lastCompletedSession\(await LtApi\.getWorkoutHistory\(exerciseId\), \{ before: day \}\)/);
+  // Fork (safety layer): the card keeps the whole history for its tips, then
+  // picks the same session from it.
+  assert.match(card, /const all = await LtApi\.getWorkoutHistory\(exerciseId\);/);
+  assert.match(card, /lastCompletedSession\(history, \{ before: day \}\)/);
   // Per-set specs and an active periodized week still win over history.
   assert.match(diary, /if \(ex\.set_specs && ex\.set_specs\.length > 0\) \{/);
   assert.match(diary, /const planWins = !!\(planWeek && ex\.weeks\?\.length\);/);
