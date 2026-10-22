@@ -5,6 +5,10 @@
   // Fork patch 4: progress planning.
   import WeekPlanCard from '../components/diary/WeekPlanCard.svelte';
   import CheckinCard from '../components/diary/CheckinCard.svelte';
+  // Fork patch 5: engagement.
+  import RecapCard from '../components/diary/RecapCard.svelte';
+  import { weekStreak, totals as _totals, crossedMilestones } from '../lib/engagement.js';
+  import { celebrations, weeklyWorkoutGoal as _weeklyGoal } from '../stores/settings.js';
   import { cleanPrefs, muscleGaps } from '../lib/suggestions.js';
   import { getLibrary, getUsage } from '../lib/exercise-library.js';
   import { suggestionPrefs } from '../stores/settings.js';
@@ -293,6 +297,33 @@
     }
     return count;
   })();
+  // Fork patch 5: the streak shown is weeks in a row that hit the weekly
+  // workout goal, so rest days never break it. streakCount (days) stays
+  // computed for anything upstream still reads.
+  $: weekStreakInfo = weekStreak(activeDateSet, $_weeklyGoal, localDateStr());
+
+  // Milestones crossed by the workout just finished, for the summary.
+  let summaryMilestones = [];
+  $: if (showSummary) loadMilestones();
+  async function loadMilestones() {
+    summaryMilestones = [];
+    if (!$celebrations) return;
+    try {
+      const rows = await LtApi.getRecentWorkouts(2000);
+      const day = $currentDate;
+      const all = Array.isArray(rows) ? rows : [];
+      const before = all.filter(r => r.date !== day);
+      const toLbs = (v) => ($weightUnit === 'kg' ? v * 2.20462 : v);
+      const tb = _totals(before), ta = _totals(all);
+      const goal = $_weeklyGoal;
+      const datesOf = (rs) => rs.filter(r => (r.exercises || []).some(e => (e.sets || []).some(s => s.completed))).map(r => r.date);
+      summaryMilestones = crossedMilestones(
+        { workouts: tb.workouts, weeks: weekStreak(datesOf(before), goal, day).weeks, volumeLbs: toLbs(tb.volume) },
+        { workouts: ta.workouts, weeks: weekStreak(datesOf(all), goal, day).weeks, volumeLbs: toLbs(ta.volume) },
+      );
+    } catch { summaryMilestones = []; }
+  }
+
   // Desktop right-rail visibility toggle. 'pinned' = default sticky
   // sidebar; 'hidden' = rail collapses to a fixed edge-tab so the
   // center column reclaims that width. Persists per-device so a
@@ -2488,9 +2519,9 @@
       <span class="date-text">{formatDateHeader($currentDate)}</span>
       <span class="date-sub">{formatDateSub($currentDate)}</span>
     </button>
-    {#if streakCount >= 2}
-      <span class="streak-chip" title={`${streakCount}-day streak`}>
-        🔥 {streakCount}
+    {#if $celebrations && weekStreakInfo.weeks >= 1}
+      <span class="streak-chip" data-testid="week-streak-chip" title={$_('engage.week_streak_title', { values: { weeks: weekStreakInfo.weeks, goal: weekStreakInfo.goal } })}>
+        {$_('engage.week_streak_chip', { values: { weeks: weekStreakInfo.weeks } })}
       </span>
     {/if}
     {#if !isToday}
@@ -2869,6 +2900,7 @@
       <!-- Fork patch 4 -->
       <WeekPlanCard today={$currentDate} hasExercises={exercises.length > 0} refreshKey={exercises.length} on:start={startPlanned} />
       <CheckinCard today={$currentDate} />
+      {#if $celebrations}<RecapCard today={$currentDate} />{/if}
     {/if}
     {#if !loading && isToday && gaps.length}
       <!-- Fork patch 3: muscle groups with no work in the last 7 days. -->
@@ -3233,8 +3265,8 @@
           </button>
         {/each}
       </div>
-      {#if streakCount >= 2}
-        <div class="rail-card-meta">🔥 {streakCount}-day streak</div>
+      {#if $celebrations && weekStreakInfo.weeks >= 1}
+        <div class="rail-card-meta">🔥 {$_('engage.week_streak', { values: { weeks: weekStreakInfo.weeks } })}</div>
       {/if}
     </div>
     {#if recentWorkouts.length > 0}
@@ -3701,7 +3733,7 @@
     {/if}
   </div>
 </Sheet>
-<WorkoutSummary bind:open={showSummary} workout={$todayLog} prCount={prCountToday} streak={streakCount} onDurationChange={handleSummaryDurationChange} />
+<WorkoutSummary bind:open={showSummary} workout={$todayLog} prCount={prCountToday} streak={0} weekStreak={$celebrations ? weekStreakInfo.weeks : 0} milestones={summaryMilestones} celebrate={$celebrations} onDurationChange={handleSummaryDurationChange} />
 <ExerciseInfoSheet bind:open={infoSheetOpen} exerciseId={infoSheetExerciseId} exerciseName={infoSheetExerciseName} on:replace={handleInfoReplace} />
 <!-- Fork patch 3: ranked swaps -->
 <SwapSheet bind:open={swapOpen} source={swapSource} on:use={useSwap} />

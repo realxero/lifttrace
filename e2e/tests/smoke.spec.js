@@ -48,7 +48,8 @@ test('statistics open on the overview', async ({ page }) => {
   const noErrors = watchErrors(page);
   await open(page, 'statistics');
   await expect(page.getByText('Overview').first()).toBeVisible();
-  await expect(page.getByText(/streak/i).first()).toBeVisible();
+  // Fork patch 5: the streak tile reads "weeks in a row" with celebrations on.
+  await expect(page.getByText(/streak|in a row/i).first()).toBeVisible();
   noErrors();
 });
 

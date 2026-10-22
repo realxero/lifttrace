@@ -18,6 +18,12 @@
   // summary can celebrate concretely instead of just "Workout Complete!".
   export let prCount = 0;
   export let streak = 0;
+  // Fork patch 5: weeks in a row hitting the weekly goal, milestones the
+  // workout crossed, and whether celebrations are on at all.
+  export let weekStreak = 0;
+  export let milestones = [];
+  export let celebrate = true;
+  import { compareVolume } from '../../lib/engagement.js';
   // Parent owns the workout row; we let it know when the user adjusts
   // duration on the summary so it can persist + re-trigger downstream
   // hooks (calorie display, NutriTrace federation push, etc.).
@@ -106,6 +112,8 @@
     }
     return { volume: Math.round(volume), sets, exercises: exercisesWithCompletedSets };
   })();
+  // Fork patch 5: "That's about 3 cars lifted today."
+  $: likeThing = compareVolume(stats.volume, $weightUnit);
 
   // Group consecutive exercises that share a superset_id into a single
   // visual block so the summary preserves the training structure (an A1/A2
@@ -186,15 +194,31 @@
         {#if workout.name}
           <span class="ws-name">{workout.name}</span>
         {/if}
-        {#if prCount > 0 || streak >= 2}
-          <div class="ws-celebration-row">
+        {#if prCount > 0 || streak >= 2 || weekStreak >= 1 || (celebrate && milestones.length)}
+          <div class="ws-celebration-row" data-testid="ws-celebrations">
             {#if prCount > 0}
               <span class="ws-celeb-chip pr">🔥 {prCount} new {prCount === 1 ? 'PR' : 'PRs'}</span>
             {/if}
             {#if streak >= 2}
               <span class="ws-celeb-chip streak">🔥 {streak}-day streak</span>
             {/if}
+            {#if weekStreak >= 1}
+              <span class="ws-celeb-chip streak">🔥 {$_('engage.week_streak', { values: { weeks: weekStreak } })}</span>
+            {/if}
+            {#if celebrate}
+              {#each milestones as m}
+                <span class="ws-celeb-chip pr" data-testid="ws-milestone">
+                  {#if m.kind === 'workouts' && m.value === 1}{$_('engage.milestone_first')}
+                  {:else if m.kind === 'workouts'}{$_('engage.milestone_workouts', { values: { value: m.value } })}
+                  {:else if m.kind === 'weeks'}{$_('engage.milestone_weeks', { values: { value: m.value } })}
+                  {:else}{$_('engage.milestone_volume', { values: { value: ($weightUnit === 'kg' ? Math.round(m.value / 2.20462) : m.value).toLocaleString(), unit: $weightUnit } })}{/if}
+                </span>
+              {/each}
+            {/if}
           </div>
+        {/if}
+        {#if celebrate && likeThing}
+          <p class="ws-like" data-testid="ws-like">{$_('engage.lifted_like', { values: { count: likeThing.count, thing: $_(`engage.things.${likeThing.key}`, { values: { count: likeThing.count } }) } })}</p>
         {/if}
       </div>
 
@@ -546,4 +570,6 @@
   }
   .ws-icon-btn .material-symbols-rounded { font-size: 20px; }
   .ws-done-btn { flex: 1; }
+  /* Fork patch 5 */
+  .ws-like { margin: 8px 0 0; font-size: 13px; color: var(--text-2); text-align: center; }
 </style>

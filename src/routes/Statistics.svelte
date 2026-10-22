@@ -1,4 +1,8 @@
 <script>
+  // Fork patch 5: weekly streak + milestones.
+  import MilestonesCard from '../components/statistics/MilestonesCard.svelte';
+  import { celebrations as _celebrations } from '../stores/settings.js';
+  let weekStreakInfo = null;
   import { onMount, onDestroy } from 'svelte';
   import { push, querystring } from 'svelte-spa-router';
   import { _ } from 'svelte-i18n';
@@ -741,15 +745,22 @@
         <div class="summary-row">
           <div class="summary-card">
             <span class="material-symbols-rounded sc-icon">local_fire_department</span>
-            <span class="sc-value">{streaks.currentStreak}</span>
-            <span class="sc-label">{$_('statistics.day_streak')}</span>
-            <div class="sc-spark" title={$_('statistics.streak_hint')}>
-              <Sparkline type="dots" values={streakSparkline} width={84} height={14} color="var(--accent)" />
-            </div>
+            {#if $_celebrations && weekStreakInfo}
+              <span class="sc-value">{weekStreakInfo.weeks}</span>
+              <span class="sc-label">{$_('engage.week_streak', { values: { weeks: weekStreakInfo.weeks } }).replace(/^\d+\s*/, '')}</span>
+            {:else}
+              <span class="sc-value">{streaks.currentStreak}</span>
+              <span class="sc-label">{$_('statistics.day_streak')}</span>
+            {/if}
+            {#if !($_celebrations && weekStreakInfo)}
+              <div class="sc-spark" title={$_('statistics.streak_hint')}>
+                <Sparkline type="dots" values={streakSparkline} width={84} height={14} color="var(--accent)" />
+              </div>
+            {/if}
           </div>
           <div class="summary-card">
             <span class="material-symbols-rounded sc-icon">emoji_events</span>
-            <span class="sc-value">{streaks.longestStreak}</span>
+            <span class="sc-value">{$_celebrations && weekStreakInfo ? weekStreakInfo.longest : streaks.longestStreak}</span>
             <span class="sc-label">{$_('statistics.longest')}</span>
           </div>
           <div class="summary-card">
@@ -772,6 +783,10 @@
             <span class="sc-label">{$_('statistics.avg_week')}</span>
           </div>
         </div>
+        {#if $_celebrations}
+          <!-- Fork patch 5 -->
+          <MilestonesCard bind:streak={weekStreakInfo} />
+        {/if}
 
         {#if rangeCalories != null}
           <div class="cal-strip" title={$_('statistics.cal_hint')}>

@@ -29,6 +29,7 @@ const SERVER_SETTINGS = new Set([
   'safetyTips', 'safetyMutedExercises',   // fork: safety layer
   'suggestionPrefs',                      // fork: suggestion engine
   'trainingDays', 'liftGoals',            // fork: progress planning
+  'celebrations',                         // fork: engagement
   'radioStations',
   'restTimerEnabled', 'restDuration', 'restAutoStart', 'restAlert',
   'restAlertVibrate', 'restAlertTone', 'restAlertToneId', 'restPerExercise',
@@ -273,6 +274,8 @@ export const safetyMutedExercises   = createSettingStore('safetyMutedExercises',
 // Fork patch 4: weekdays you train (0=Sun … 6=Sat; empty = not planned yet)
 // and strength goals { [exerciseId]: { target, name } } (target is an e1RM).
 export const trainingDays           = createSettingStore('trainingDays', []);
+// Fork patch 5: weekly streaks, milestones, monthly recap, comparisons.
+export const celebrations           = createSettingStore('celebrations', true);
 export const liftGoals              = createSettingStore('liftGoals', {});
 export const suggestionPrefs        = createSettingStore('suggestionPrefs', { enabled: true, strictness: 'balanced', protect: [], never: [], equipment: [] });
 

@@ -8,7 +8,7 @@
     exerciseReorderMethod, confirmExerciseRemoval, restTimerEnabled,
     restDuration, restAutoStart, restAlert, restAlertVibrate, restAlertTone,
     bodyStatsVisible, autoGenerateWarmups, trackRpe, restAlertToneId,
-    safetyTips, safetyMutedExercises, suggestionPrefs,
+    safetyTips, safetyMutedExercises, suggestionPrefs, celebrations,
     caloriesBurnedEnabled,
   } from '../../stores/settings.js';
   import { REST_TONES } from '../../lib/restTones.js';
@@ -207,6 +207,14 @@
             <span class="setting-hint">{$_('settings_workout.logging.rpe_desc')}</span>
           </div>
           <Toggle bind:checked={$trackRpe} />
+        </div>
+        <!-- Fork patch 5: engagement -->
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <span class="setting-label">{$_('engage.settings_label')}</span>
+            <span class="setting-hint">{$_('engage.settings_desc')}</span>
+          </div>
+          <Toggle bind:checked={$celebrations} />
         </div>
         <!-- Fork: safety layer -->
         <div class="setting-row">

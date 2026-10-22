@@ -2301,5 +2301,40 @@
     "capped":         "You're progressing fast; the estimate assumes a sustainable pace.",
     "flat":           "Not trending up over the last 8 weeks yet. Consistent sessions and good sleep usually get it moving.",
     "not_enough":     "Log this lift a few more times over 2+ weeks to see a projected date."
+  },
+  "engage": {
+    "week_streak":       "{weeks, plural, one {# week} other {# weeks}} in a row",
+    "week_streak_chip":  "🔥 {weeks}w",
+    "week_streak_title": "{weeks, plural, one {# week} other {# weeks}} in a row hitting {goal} workouts. Rest days never break it.",
+    "this_week":         "{done} of {goal} this week",
+    "milestone_workouts": "🏅 Workout #{value}!",
+    "milestone_first":   "🏅 First workout logged!",
+    "milestone_weeks":   "🏅 {value} weeks in a row!",
+    "milestone_volume":  "🏅 {value} {unit} lifted all-time!",
+    "lifted_like":       "That's about {count} {thing} lifted today.",
+    "things": {
+      "blue_whale":    "{count, plural, one {blue whale} other {blue whales}}",
+      "space_shuttle": "{count, plural, one {space shuttle} other {space shuttles}}",
+      "school_bus":    "{count, plural, one {school bus} other {school buses}}",
+      "elephant":      "{count, plural, one {elephant} other {elephants}}",
+      "car":           "{count, plural, one {car} other {cars}}",
+      "piano":         "{count, plural, one {grand piano} other {grand pianos}}",
+      "bear":          "{count, plural, one {grizzly bear} other {grizzly bears}}",
+      "fridge":        "{count, plural, one {fridge} other {fridges}}"
+    },
+    "recap_title":       "{month} recap",
+    "recap_line":        "{workouts, plural, one {# workout} other {# workouts}} · {sets} sets · {volume} {unit}",
+    "recap_thing":       "That's about {count} {thing} over the month.",
+    "recap_top":         "Most trained: {name} ({sets} sets).",
+    "recap_more":        "{n, plural, one {# more workout} other {# more workouts}} than the month before.",
+    "recap_same":        "Same number of workouts as the month before. Steady wins.",
+    "recap_fewer":       "A lighter month than the one before, and that's okay. Every session counts.",
+    "recap_ok":          "Nice",
+    "milestones_title":  "Milestones",
+    "milestones_empty":  "Your first workout earns the first one.",
+    "streak_now":        "Current: {weeks, plural, one {# week} other {# weeks}}",
+    "streak_best":       "Best: {weeks, plural, one {# week} other {# weeks}}",
+    "settings_label":    "Celebrations",
+    "settings_desc":     "Weekly streaks, milestones, the monthly recap and fun comparisons when you finish a workout."
   }
 }

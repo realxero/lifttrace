@@ -5,7 +5,7 @@ export const UPSTREAM_VERSION = 'v1.4.0';
 // "+fork.N" part is semver build metadata, which the update checker
 // (lib/updates.js) ignores, so upstream releases still compare correctly.
 // See FORK.md for what each fork patch contains.
-export const FORK_VERSION = 'fork.4';
+export const FORK_VERSION = 'fork.5';
 
 export const APP_VERSION = `${UPSTREAM_VERSION}+${FORK_VERSION}`;
 
