@@ -10,7 +10,9 @@
   import LoadTypeMenu from '../ui/LoadTypeMenu.svelte';
   // Fork: safety layer (deload / pain follow-ups / big jumps).
   import { safetyNotes } from '../../lib/safety.js';
-  import { safetyTips, safetyMutedExercises } from '../../stores/settings.js';
+  import { safetyTips, safetyMutedExercises, suggestionPrefs } from '../../stores/settings.js';
+  // Fork patch 3: suggestion engine (protected areas, stalled lifts).
+  import { cleanPrefs, areasLoaded, stallCheck } from '../../lib/suggestions.js';
 
   export let exercise;
   export let idx;
@@ -89,7 +91,19 @@
         painToday: !!exercise.pain, muted: _muted || _dismissed,
       })
     : (exercise.pain ? [{ kind: 'pain_today' }] : []);
-  $: hasCoachingTip = notes.some(n => n.kind === 'deload' || n.kind === 'jump');
+  // Suggestions sit with the safety tips. A stall tip waits while a deload
+  // tip is showing: hard sessions explain a stall better than "add a rep".
+  $: sPrefs = cleanPrefs($suggestionPrefs || {});
+  $: protectedAreas = sPrefs.enabled ? areasLoaded(exercise, sPrefs.protect) : [];
+  $: stall = sPrefs.enabled && !_muted && !_dismissed && !notes.some(n => n.kind === 'deload')
+    ? stallCheck(history, { before: date, strictness: sPrefs.strictness })
+    : null;
+  $: allNotes = [
+    ...notes,
+    ...(protectedAreas.length ? [{ kind: 'protect', areas: protectedAreas }] : []),
+    ...(stall ? [{ kind: 'stall', ...stall }] : []),
+  ];
+  $: hasCoachingTip = allNotes.some(n => n.kind === 'deload' || n.kind === 'jump' || n.kind === 'stall');
   function dismissTips() {
     try { localStorage.setItem(_dismissKey(date, exercise.exercise_id), '1'); } catch {}
     _dismissed = true;
@@ -452,12 +466,12 @@
         {/if}
       </div>
     {/if}
-    {#if notes.length}
+    {#if allNotes.length}
       <div class="safety-notes" data-testid="safety-notes">
-        {#each notes as n}
+        {#each allNotes as n}
           <div class="safety-note" class:pain={n.kind.startsWith('pain')} data-kind={n.kind}>
             <span class="material-symbols-rounded safety-icon" aria-hidden="true">
-              {n.kind === 'deload' ? 'battery_charging_50' : n.kind === 'jump' ? 'trending_up' : n.kind === 'pain_repeat' ? 'medical_services' : 'healing'}
+              {n.kind === 'deload' ? 'battery_charging_50' : n.kind === 'jump' ? 'trending_up' : n.kind === 'pain_repeat' ? 'medical_services' : n.kind === 'protect' ? 'shield' : n.kind === 'stall' ? 'trending_flat' : 'healing'}
             </span>
             <div class="safety-text">
               {#if n.kind === 'pain_today'}{$_('safety.pain_today')}
@@ -466,6 +480,11 @@
               {:else if n.kind === 'pain_repeat'}{$_('safety.pain_repeat', { values: { count: n.count } })}
               {:else if n.kind === 'deload'}{$_('safety.deload', { values: { rpes: n.rpes.join(', ') } })}
               {:else if n.kind === 'jump'}{$_('safety.jump', { values: { from: n.from, to: n.to, unit } })}
+              {:else if n.kind === 'protect'}{$_('suggest.protect_tip', { values: { areas: n.areas.map(a => $_(`suggest.areas.${a}`)).join(', ') } })}
+              {:else if n.kind === 'stall'}{$_('suggest.stall_tip', { values: { top: `${n.top.weight}×${n.top.reps}`, sessions: n.sessions } })}
+              {/if}
+              {#if n.kind === 'protect' || n.kind === 'stall'}
+                <button type="button" class="safety-link" on:click|stopPropagation={() => dispatch('swap')}>{$_('suggest.see_swaps')}</button>
               {/if}
               {#if n.kind === 'pain_last' || n.kind === 'pain_today' || n.kind === 'pain_repeat'}
                 <button type="button" class="safety-link" on:click|stopPropagation={() => dispatch('info')}>{$_('safety.find_variation')}</button>

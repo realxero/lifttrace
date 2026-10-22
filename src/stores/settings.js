@@ -27,6 +27,7 @@ const SERVER_SETTINGS = new Set([
   'exerciseReorderMethod', 'autoCollapseCompleted', 'autoNameWorkouts', 'confirmExerciseRemoval',
   'autoGenerateWarmups', 'trackRpe',
   'safetyTips', 'safetyMutedExercises',   // fork: safety layer
+  'suggestionPrefs',                      // fork: suggestion engine
   'radioStations',
   'restTimerEnabled', 'restDuration', 'restAutoStart', 'restAlert',
   'restAlertVibrate', 'restAlertTone', 'restAlertToneId', 'restPerExercise',
@@ -266,6 +267,9 @@ export const trackRpe               = createSettingStore('trackRpe', false);
 // big weight jumps), and exercise ids whose coaching tips are muted.
 export const safetyTips             = createSettingStore('safetyTips', true);
 export const safetyMutedExercises   = createSettingStore('safetyMutedExercises', []);
+// Fork: suggestion engine (src/lib/suggestions.js): { enabled, strictness,
+// protect: [area], never: [{id, name}], equipment: [bucket] }.
+export const suggestionPrefs        = createSettingStore('suggestionPrefs', { enabled: true, strictness: 'balanced', protect: [], never: [], equipment: [] });
 
 // Radio stations (user-managed list of streaming URLs): [{id, name, url, genre}]
 export const radioStations = createSettingStore('radioStations', []);

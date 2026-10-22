@@ -147,6 +147,7 @@
                 on:remove={() => dispatch('remove', { idx: startIdx + i })}
                 on:menu={() => dispatch('menu', { idx: startIdx + i })}
                 on:info={() => dispatch('info', { idx: startIdx + i })}
+                on:swap={() => dispatch('swap', { idx: startIdx + i })}
                 on:moveUp={() => dispatch('moveWithinSuperset', { supersetId, fromIdx: i, toIdx: i - 1 })}
                 on:moveDown={() => dispatch('moveWithinSuperset', { supersetId, fromIdx: i, toIdx: i + 1 })}
               />

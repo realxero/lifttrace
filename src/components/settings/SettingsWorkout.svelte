@@ -8,10 +8,16 @@
     exerciseReorderMethod, confirmExerciseRemoval, restTimerEnabled,
     restDuration, restAutoStart, restAlert, restAlertVibrate, restAlertTone,
     bodyStatsVisible, autoGenerateWarmups, trackRpe, restAlertToneId,
-    safetyTips, safetyMutedExercises,
+    safetyTips, safetyMutedExercises, suggestionPrefs,
     caloriesBurnedEnabled,
   } from '../../stores/settings.js';
   import { REST_TONES } from '../../lib/restTones.js';
+  // Fork patch 3: suggestion engine settings.
+  import { cleanPrefs, AREA_KEYS, STRICTNESS } from '../../lib/suggestions.js';
+  import { EQUIPMENT_BUCKETS } from '../../lib/equipment.js';
+  $: sp = cleanPrefs($suggestionPrefs || {});
+  function setSp(patch) { suggestionPrefs.set({ ...cleanPrefs($suggestionPrefs || {}), ...patch }); }
+  function toggleIn(list, v) { return list.includes(v) ? list.filter(x => x !== v) : [...list, v]; }
   import { LtApi } from '../../lib/api.js';
   import { showError, showSuccess } from '../../stores/toast.js';
   import { confirmDialog } from '../../stores/confirmDialog.js';
@@ -218,6 +224,72 @@
         </div>
       </div>
 
+      <!-- Fork patch 3: suggestions -->
+      <p class="sub-label">{$_('suggest.settings.section')}</p>
+      <div class="card" data-testid="suggestion-settings">
+        <div class="setting-row">
+          <div class="setting-label-group">
+            <span class="setting-label">{$_('suggest.settings.enabled')}</span>
+            <span class="setting-hint">{$_('suggest.settings.enabled_desc')}</span>
+          </div>
+          <Toggle checked={sp.enabled} on:change={e => setSp({ enabled: !!e.detail })} />
+        </div>
+        {#if sp.enabled}
+          <div class="setting-row stack">
+            <div class="setting-label-group">
+              <span class="setting-label">{$_('suggest.settings.strictness')}</span>
+              <span class="setting-hint">{$_('suggest.settings.strictness_desc')}</span>
+            </div>
+            <div class="seg" role="radiogroup" aria-label={$_('suggest.settings.strictness')}>
+              {#each STRICTNESS as lv}
+                <button type="button" role="radio" aria-checked={sp.strictness === lv} class:on={sp.strictness === lv}
+                  on:click={() => setSp({ strictness: lv })}>{$_(`suggest.settings.${lv}`)}</button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+        <div class="setting-row stack">
+          <div class="setting-label-group">
+            <span class="setting-label">{$_('suggest.settings.protect')}</span>
+            <span class="setting-hint">{$_('suggest.settings.protect_desc')}</span>
+          </div>
+          <div class="chips">
+            {#each AREA_KEYS as a}
+              <button type="button" class="chip" class:on={sp.protect.includes(a)} aria-pressed={sp.protect.includes(a)}
+                on:click={() => setSp({ protect: toggleIn(sp.protect, a) })}>{$_(`suggest.areas.${a}`)}</button>
+            {/each}
+          </div>
+        </div>
+        <div class="setting-row stack">
+          <div class="setting-label-group">
+            <span class="setting-label">{$_('suggest.settings.equipment')}</span>
+            <span class="setting-hint">{$_('suggest.settings.equipment_desc')}</span>
+          </div>
+          <div class="chips">
+            {#each EQUIPMENT_BUCKETS as b}
+              <button type="button" class="chip" class:on={sp.equipment.includes(b)} aria-pressed={sp.equipment.includes(b)}
+                on:click={() => setSp({ equipment: toggleIn(sp.equipment, b) })}>{b}</button>
+            {/each}
+          </div>
+        </div>
+        <div class="setting-row stack">
+          <div class="setting-label-group">
+            <span class="setting-label">{$_('suggest.settings.never')}</span>
+            {#if !sp.never.length}<span class="setting-hint">{$_('suggest.settings.never_empty')}</span>{/if}
+          </div>
+          {#if sp.never.length}
+            <div class="chips">
+              {#each sp.never as n (n.id ?? n.name)}
+                <button type="button" class="chip on removable" aria-label={$_('suggest.settings.remove', { values: { name: n.name } })}
+                  on:click={() => setSp({ never: sp.never.filter(x => x !== n) })}>
+                  {n.name}<span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      </div>
+
       <p class="sub-label">{$_('settings_workout.sections.rest_timer')}</p>
       <div class="card">
         <div class="setting-row">
@@ -388,4 +460,18 @@
   .tone-preview .material-symbols-rounded { font-size: 18px; }
   /* Fork: safety layer */
   .link-btn { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+  /* Fork patch 3: suggestion settings */
+  .setting-row.stack { flex-direction: column; align-items: stretch; gap: 8px; height: auto; min-height: 0; max-height: none; }
+  .setting-row.stack > * { flex: 0 0 auto; }
+  .seg { display: flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+  .seg button { flex: 1; min-height: 36px; background: none; border: 0; font: inherit; font-size: 13px; color: var(--text-2); cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #fff; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 2px; min-height: 34px; padding: 0 12px;
+    border-radius: 999px; border: 1px solid var(--border); background: none;
+    color: var(--text-2); font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .chip.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); font-weight: 600; }
+  .chip.removable .material-symbols-rounded { font-size: 16px; }
 </style>

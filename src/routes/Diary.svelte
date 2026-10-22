@@ -1,5 +1,10 @@
 <script>
   import { makePainFlag } from '../lib/safety.js';  // fork: safety layer
+  // Fork patch 3: suggestion engine.
+  import SwapSheet from '../components/diary/SwapSheet.svelte';
+  import { cleanPrefs, muscleGaps } from '../lib/suggestions.js';
+  import { getLibrary, getUsage } from '../lib/exercise-library.js';
+  import { suggestionPrefs } from '../stores/settings.js';
   import { closeOnBack } from '../lib/back-stack.js';
   import { onMount, onDestroy } from 'svelte';
   import { withFreshIds } from '../lib/workout-uuid.js';
@@ -2202,6 +2207,47 @@
   let newSsPickerOpen = false;
   let newSsPicks = [];
 
+  // ── Fork patch 3: swaps + weekly gaps ─────────────────────────────
+  let swapOpen = false;
+  let swapIdx = null;
+  let swapSource = null;
+  function openSwap(idx) {
+    const ex = exercises[idx];
+    if (!ex) return;
+    swapIdx = idx;
+    swapSource = { exercise_id: ex.exercise_id, exercise_name: ex.exercise_name };
+    swapOpen = true;
+  }
+  async function useSwap(e) {
+    if (swapIdx == null) return;
+    replacingIdx = swapIdx;
+    swapIdx = null;
+    await addExercise(e.detail);
+  }
+
+  let gaps = [];
+  let _gapKey = null;
+  const _gapDismissKey = (d) => `lt:gapDismissed:${d}`;
+  $: _sp = cleanPrefs($suggestionPrefs || {});
+  $: if (isToday && !loading) loadGaps(`${$currentDate}|${exercises.length}|${JSON.stringify(_sp)}`);
+  async function loadGaps(key) {
+    if (key === _gapKey) return;
+    _gapKey = key;
+    let dismissed = false;
+    try { dismissed = !!localStorage.getItem(_gapDismissKey($currentDate)); } catch {}
+    if (!_sp.enabled || dismissed) { gaps = []; return; }
+    try {
+      const [recent, lib, usage] = await Promise.all([LtApi.getRecentWorkouts(30), getLibrary(), getUsage()]);
+      if (key !== _gapKey) return;
+      gaps = muscleGaps(Array.isArray(recent) ? recent : [], lib, _sp, { today: $currentDate, usage })
+        .filter(g => g.suggestion && !exercises.some(x => Number(x.exercise_id) === Number(g.suggestion.id)));
+    } catch { gaps = []; }
+  }
+  function dismissGaps() {
+    try { localStorage.setItem(_gapDismissKey($currentDate), '1'); } catch {}
+    gaps = [];
+  }
+
   function openExMenu(idx) {
     const ex = exercises[idx];
     if (!ex) return;
@@ -2211,6 +2257,8 @@
     const actions = [];
     actions.push({ label: $_('set_video.film_set'), icon: 'videocam', value: 'film' });
     actions.push({ label: 'Replace exercise', icon: 'swap_horiz', value: 'replace' });
+    // Fork patch 3: ranked swaps, available even with suggestions off.
+    actions.push({ label: $_('suggest.swap_menu'), icon: 'auto_awesome', value: 'swap' });
     // Fork: safety layer. The flag lives on this session's exercise entry.
     actions.push(ex.pain
       ? { label: $_('safety.clear_pain'), icon: 'healing', value: 'clear_pain' }
@@ -2239,6 +2287,7 @@
         showPicker = true;
         break;
       case 'film': openVideoSheet(idx); break;
+      case 'swap': openSwap(idx); break;
       case 'flag_pain': {
         const ex = exercises[idx];
         if (ex) {
@@ -2805,6 +2854,24 @@
 
   <!-- Exercise list -->
   <div class="exercise-list">
+    {#if !loading && isToday && gaps.length}
+      <!-- Fork patch 3: muscle groups with no work in the last 7 days. -->
+      <div class="gap-card" data-testid="gap-card">
+        <div class="gap-head">
+          <span class="material-symbols-rounded" aria-hidden="true">auto_awesome</span>
+          <span class="gap-title">{$_('suggest.gap_title')}</span>
+          <button type="button" class="gap-dismiss" on:click={dismissGaps}>{$_('suggest.gap_dismiss')}</button>
+        </div>
+        {#each gaps as g (g.group)}
+          <div class="gap-row">
+            <span class="gap-text">{$_('suggest.gap_text', { values: { group: $_(`suggest.groups.${g.group}`) } })}</span>
+            <button type="button" class="gap-add" on:click={() => addExercise(g.suggestion)}>
+              <span class="material-symbols-rounded" aria-hidden="true">add</span>{$_('suggest.gap_add', { values: { name: g.suggestion.name } })}
+            </button>
+          </div>
+        {/each}
+      </div>
+    {/if}
     {#if loading}
       <Spinner block label="Loading workout…" />
     {:else if exercises.length === 0}
@@ -2897,6 +2964,7 @@
               on:openMedia={e => openClip(e.detail)}
               on:menu={e => openExMenu(e.detail.idx)}
               on:info={e => openInfoSheet(e.detail.idx)}
+              on:swap={e => openSwap(e.detail.idx)}
               on:moveWithinSuperset={e => moveWithinSuperset(e.detail)}
             />
           {:else}
@@ -2917,6 +2985,7 @@
               on:openMedia={e => openClip(e.detail)}
               on:menu={() => openExMenu(group.startIdx)}
               on:info={() => openInfoSheet(group.startIdx)}
+              on:swap={() => openSwap(group.startIdx)}
             />
           {/if}
           <!-- Per-exercise coach feedback for single-exercise groups.
@@ -3618,6 +3687,8 @@
 </Sheet>
 <WorkoutSummary bind:open={showSummary} workout={$todayLog} prCount={prCountToday} streak={streakCount} onDurationChange={handleSummaryDurationChange} />
 <ExerciseInfoSheet bind:open={infoSheetOpen} exerciseId={infoSheetExerciseId} exerciseName={infoSheetExerciseName} on:replace={handleInfoReplace} />
+<!-- Fork patch 3: ranked swaps -->
+<SwapSheet bind:open={swapOpen} source={swapSource} on:use={useSwap} />
 
 <style>
   .page {
@@ -5422,4 +5493,23 @@
   :global(html.wide-content) .diary-body:not(.center-room) .exercise-list :global(.ex-card.standalone) {
     display: block;
   }
+  /* Fork patch 3: weekly gap card */
+  .gap-card {
+    margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius, 12px);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .gap-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .gap-head .material-symbols-rounded { font-size: 18px; color: var(--accent); }
+  .gap-title { font-weight: 700; font-size: 13px; color: var(--text-1); flex: 1; }
+  .gap-dismiss { background: none; border: 0; color: var(--text-3); font: inherit; font-size: 12px; cursor: pointer; min-height: 32px; }
+  .gap-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
+  .gap-text { flex: 1 1 160px; font-size: 13px; color: var(--text-2); }
+  .gap-add {
+    display: inline-flex; align-items: center; gap: 2px; min-height: 34px; padding: 0 12px;
+    border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    background: none; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    max-width: 100%; overflow-wrap: anywhere; text-align: left;
+  }
+  .gap-add .material-symbols-rounded { font-size: 18px; }
 </style>

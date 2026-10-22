@@ -2208,5 +2208,51 @@
     "clear_pain":       "Clear pain flag",
     "flagged_toast":    "Pain flagged. Take it easy on this one.",
     "cleared_toast":    "Pain flag cleared."
+  },
+  "suggest": {
+    "swap_title":        "Swap for {name}",
+    "swap_menu":         "Suggest a swap",
+    "swap_use":          "Use",
+    "swap_never":        "Never suggest",
+    "swap_none":         "No good swaps with your current settings. Try turning off a protected area or adding equipment in Settings → Workout → Suggestions.",
+    "swap_loading":      "Finding swaps…",
+    "swapped_toast":     "Swapped to {name}.",
+    "never_toast":       "Won't suggest {name} again.",
+    "reason_same_muscles":   "Same muscles",
+    "reason_protects":       "Easier on your {areas}",
+    "reason_your_equipment": "Fits your equipment",
+    "reason_done_before":    "You've done it before",
+    "protect_tip":       "Easy on your {areas}: this one loads it hard. A swap might feel better today.",
+    "stall_tip":         "Best set has stayed around {top} for {sessions} sessions. Try adding one rep a session at the same weight, or swap in a variation for 3–4 weeks.",
+    "see_swaps":         "See swaps",
+    "gap_title":         "This week",
+    "gap_text":          "No {group} work in the last 7 days.",
+    "gap_add":           "Add {name}",
+    "gap_dismiss":       "Not today",
+    "groups": {
+      "chest": "chest", "back": "back", "shoulders": "shoulder",
+      "quads": "quad", "hamstrings": "hamstring", "glutes": "glute"
+    },
+    "areas": {
+      "shoulder": "shoulder", "elbow": "elbow", "wrist": "wrist", "lower_back": "lower back",
+      "hip": "hip", "knee": "knee", "ankle": "ankle", "neck": "neck"
+    },
+    "settings": {
+      "section":          "Suggestions",
+      "enabled":          "Suggestions",
+      "enabled_desc":     "Swap ideas for exercises that load an area you're protecting, stalled-lift tips, and muscle groups you haven't trained this week. \"Suggest a swap\" in each exercise's menu works even when this is off.",
+      "strictness":       "How often",
+      "strictness_desc":  "Gentle only flags protected areas. Balanced adds stalled lifts (4 sessions) and weekly gaps. Strict calls a stall after 3 sessions and flags gaps sooner.",
+      "gentle":           "Gentle",
+      "balanced":         "Balanced",
+      "strict":           "Strict",
+      "protect":          "Protect these areas",
+      "protect_desc":     "Suggestions skip exercises that load these hard, and Trace won't program them.",
+      "equipment":        "Equipment I have",
+      "equipment_desc":   "Swaps and suggestions stick to this. None selected means everything.",
+      "never":            "Never suggest",
+      "never_empty":      "Nothing yet. Tap \"Never suggest\" on a swap to add one.",
+      "remove":           "Remove {name}"
+    }
   }
 }
